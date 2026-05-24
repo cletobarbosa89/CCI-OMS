@@ -1,15 +1,22 @@
 package com.cci.inventory.controller;
 
 import com.cci.inventory.dto.StockReservationRequest;
+import com.cci.inventory.exception.InsufficientStockException;
+import com.cci.inventory.service.InventoryService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 
 import java.util.UUID;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -20,6 +27,9 @@ class InventoryControllerTest {
     @Autowired
     MockMvc mockMvc;
 
+    @MockitoBean
+    InventoryService inventoryService;
+
     private final ObjectMapper mapper = new ObjectMapper();
 
     @Test
@@ -29,6 +39,19 @@ class InventoryControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(request)))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void reserve_insufficientStock_returns409() throws Exception {
+        doThrow(new InsufficientStockException("Insufficient stock for PROD-OUT"))
+                .when(inventoryService).reserveStock(any(), anyString(), anyInt());
+
+        StockReservationRequest request = new StockReservationRequest(UUID.randomUUID(), "PROD-OUT", 5);
+        mockMvc.perform(post("/api/inventory/reserve")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(request)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409));
     }
 
     @Test

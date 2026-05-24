@@ -1,6 +1,6 @@
 services:
 
-  # ── Core (always started) ────────────────────────────────────────────────────
+  # ── Infrastructure ────────────────────────────────────────────────────────────
 
   postgres:
     image: postgres:15-alpine
@@ -22,6 +22,8 @@ services:
     ports:
       - "6379:6379"
     command: redis-server --save "" --appendonly no
+
+  # ── Microservices ─────────────────────────────────────────────────────────────
 
   inventory-service:
     build:
@@ -53,19 +55,21 @@ services:
       SPRING_DATA_REDIS_HOST: redis
       INVENTORY_SERVICE_URL: http://inventory-service:8081
       INVENTORY_SERVICE_ENABLED: "true"
+      SPRING_PROFILES_ACTIVE: logging
     depends_on:
       - postgres
       - redis
       - inventory-service
+      - logstash
 
-  # ── Monitoring  (docker compose --profile monitoring up) ────────────────────
-  # Exposes Prometheus at http://localhost:9090
-  #         Grafana    at http://localhost:3000  (admin / admin)
+  # ── Monitoring — Prometheus + Grafana ─────────────────────────────────────────
+  # Prometheus: http://localhost:9090
+  # Grafana:    http://localhost:3000  (admin / admin)
 
   prometheus:
     image: prom/prometheus:latest
     container_name: CCI-oms-prometheus
-    profiles: ["monitoring"]
+    restart: always
     ports:
       - "9090:9090"
     volumes:
@@ -76,7 +80,7 @@ services:
   grafana:
     image: grafana/grafana:latest
     container_name: CCI-oms-grafana
-    profiles: ["monitoring"]
+    restart: always
     ports:
       - "3000:3000"
     environment:
@@ -88,9 +92,48 @@ services:
     depends_on:
       - prometheus
 
-  # ── Static Analysis  (docker compose --profile sonar up) ────────────────────
+  # ── Logging — ELK Stack ───────────────────────────────────────────────────────
+  # Kibana:        http://localhost:5601
+  # Elasticsearch: http://localhost:9200
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: CCI-oms-elasticsearch
+    restart: always
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.11.0
+    container_name: CCI-oms-logstash
+    restart: always
+    ports:
+      - "5044:5044"
+    volumes:
+      - ./monitoring/logstash/pipeline:/usr/share/logstash/pipeline:ro
+    depends_on:
+      - elasticsearch
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.0
+    container_name: CCI-oms-kibana
+    restart: always
+    ports:
+      - "5601:5601"
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+    depends_on:
+      - elasticsearch
+
+  # ── Static Analysis — SonarQube  (docker compose --profile sonar up) ─────────
   # SonarQube at http://localhost:9000  (admin / admin on first login)
-  # Then run:  mvn verify sonar:sonar -Psonar
+  # Then run:  mvn verify sonar:sonar -Psonar -pl order-service
 
   sonarqube:
     image: sonarqube:community
@@ -104,45 +147,6 @@ services:
       - sonarqube_data:/opt/sonarqube/data
       - sonarqube_logs:/opt/sonarqube/logs
       - sonarqube_extensions:/opt/sonarqube/extensions
-
-  # ── Logging / ELK  (docker compose --profile logging up) ────────────────────
-  # Kibana at http://localhost:5601
-  # Activate logging profile in app:  SPRING_PROFILES_ACTIVE=logging
-
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
-    container_name: CCI-oms-elasticsearch
-    profiles: ["logging"]
-    environment:
-      - discovery.type=single-node
-      - xpack.security.enabled=false
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-    ports:
-      - "9200:9200"
-    volumes:
-      - elasticsearch_data:/usr/share/elasticsearch/data
-
-  logstash:
-    image: docker.elastic.co/logstash/logstash:8.11.0
-    container_name: CCI-oms-logstash
-    profiles: ["logging"]
-    ports:
-      - "5044:5044"
-    volumes:
-      - ./monitoring/logstash/pipeline:/usr/share/logstash/pipeline:ro
-    depends_on:
-      - elasticsearch
-
-  kibana:
-    image: docker.elastic.co/kibana/kibana:8.11.0
-    container_name: CCI-oms-kibana
-    profiles: ["logging"]
-    ports:
-      - "5601:5601"
-    environment:
-      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
-    depends_on:
-      - elasticsearch
 
 volumes:
   postgres_data:

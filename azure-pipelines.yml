@@ -14,7 +14,7 @@ pr:
 variables:
   acrLoginServer: 'ccioms.azurecr.io'          # Replace with your ACR login server
   imageRepository: 'oms'
-  dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile'
+  dockerfilePath: '$(Build.SourcesDirectory)/order-service/Dockerfile'
   tag: '$(Build.BuildId)'
   acrServiceConnection: 'CCI-ACR-Connection'    # Azure DevOps service connection → ACR
   azureSubscription: 'CCI-Azure-Subscription'   # Azure DevOps service connection → subscription
@@ -41,25 +41,25 @@ stages:
               jdkSourceOption: PreInstalled
 
           - task: Maven@4
-            displayName: 'mvn verify'
+            displayName: 'order-service: mvn verify'
             inputs:
-              mavenPomFile: 'pom.xml'
+              mavenPomFile: 'order-service/pom.xml'
               goals: 'verify'
               options: '-B -Duser.timezone=UTC'
               publishJUnitResults: true
-              testResultsFiles: '**/surefire-reports/TEST-*.xml'
+              testResultsFiles: 'order-service/**/surefire-reports/TEST-*.xml'
               javaHomeOption: JDKVersion
               jdkVersionOption: '1.21'
 
           - task: PublishCodeCoverageResults@2
             displayName: 'Publish JaCoCo coverage'
             inputs:
-              summaryFileLocation: '$(System.DefaultWorkingDirectory)/target/site/jacoco/jacoco.xml'
-              reportDirectory: '$(System.DefaultWorkingDirectory)/target/site/jacoco'
+              summaryFileLocation: '$(System.DefaultWorkingDirectory)/order-service/target/site/jacoco/jacoco.xml'
+              reportDirectory: '$(System.DefaultWorkingDirectory)/order-service/target/site/jacoco'
               failIfCoverageEmpty: false
 
           - task: Maven@4
-            displayName: 'inventory-service mvn verify'
+            displayName: 'inventory-service: mvn verify'
             inputs:
               mavenPomFile: 'inventory-service/pom.xml'
               goals: 'verify'
@@ -79,7 +79,7 @@ stages:
         displayName: 'Docker build → ACR'
         steps:
           - task: Maven@4
-            displayName: 'mvn package -DskipTests'
+            displayName: 'mvn package -DskipTests (all modules)'
             inputs:
               mavenPomFile: 'pom.xml'
               goals: 'package'
@@ -93,19 +93,11 @@ stages:
               command: buildAndPush
               repository: '$(imageRepository)'
               dockerfile: '$(dockerfilePath)'
+              buildContext: '$(Build.SourcesDirectory)/order-service'
               containerRegistry: '$(acrServiceConnection)'
               tags: |
                 $(tag)
                 latest
-
-          - task: Maven@4
-            displayName: 'inventory-service mvn package'
-            inputs:
-              mavenPomFile: 'inventory-service/pom.xml'
-              goals: 'package'
-              options: '-B -DskipTests'
-              javaHomeOption: JDKVersion
-              jdkVersionOption: '1.21'
 
           - task: Docker@2
             displayName: 'Build and push inventory-service to ACR'
@@ -113,6 +105,7 @@ stages:
               command: buildAndPush
               repository: 'inventory-service'
               dockerfile: '$(Build.SourcesDirectory)/inventory-service/Dockerfile'
+              buildContext: '$(Build.SourcesDirectory)/inventory-service'
               containerRegistry: '$(acrServiceConnection)'
               tags: |
                 $(tag)

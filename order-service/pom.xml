@@ -265,6 +265,13 @@
                         <version>${jmeter-plugin.version}</version>
                         <executions>
                             <execution>
+                                <id>configuration</id>
+                                <phase>validate</phase>
+                                <goals>
+                                    <goal>configure</goal>
+                                </goals>
+                            </execution>
+                            <execution>
                                 <id>jmeter-run</id>
                                 <phase>integration-test</phase>
                                 <goals>

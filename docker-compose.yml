@@ -86,6 +86,9 @@ services:
     environment:
       GF_SECURITY_ADMIN_USER: admin
       GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_AUTH_DISABLE_LOGIN_FORM: "false"
     volumes:
       - grafana_data:/var/lib/grafana
       - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
@@ -102,7 +105,9 @@ services:
     restart: always
     environment:
       - discovery.type=single-node
-      - xpack.security.enabled=false
+      - xpack.security.enabled=true
+      - xpack.security.http.ssl.enabled=false
+      - ELASTIC_PASSWORD=elastic123
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
     ports:
       - "9200:9200"
@@ -115,6 +120,9 @@ services:
     restart: always
     ports:
       - "5044:5044"
+    environment:
+      ELASTIC_USER: elastic
+      ELASTIC_PASSWORD: elastic123
     volumes:
       - ./monitoring/logstash/pipeline:/usr/share/logstash/pipeline:ro
     depends_on:
@@ -128,6 +136,8 @@ services:
       - "5601:5601"
     environment:
       ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+      ELASTICSEARCH_USERNAME: elastic
+      ELASTICSEARCH_PASSWORD: elastic123
     depends_on:
       - elasticsearch
 

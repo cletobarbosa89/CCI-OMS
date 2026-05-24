@@ -31,7 +31,7 @@ public class OrderSagaOrchestrator {
         log.info("Saga step 1: confirming order {}", event.orderId());
         try {
             orderService.updateOrderStatus(event.orderId(), OrderStatus.CONFIRMED);
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             log.error("Saga step 1 failed for order {}, compensating", event.orderId(), e);
             compensate(event.orderId());
         }
@@ -49,7 +49,7 @@ public class OrderSagaOrchestrator {
         try {
             inventoryPort.reserveStock(event.orderId(), event.productId(), event.quantity());
             orderService.updateOrderStatus(event.orderId(), OrderStatus.SHIPPED);
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             log.error("Saga step 2 failed for order {}, compensating", event.orderId(), e);
             compensate(event.orderId());
         }
@@ -60,7 +60,7 @@ public class OrderSagaOrchestrator {
         try {
             orderService.updateOrderStatus(orderId, OrderStatus.CANCELLED);
             log.info("Saga compensation: order {} cancelled", orderId);
-        } catch (Exception ex) {
+        } catch (RuntimeException ex) {
             log.error("Saga compensation failed for order {}", orderId, ex);
         }
     }

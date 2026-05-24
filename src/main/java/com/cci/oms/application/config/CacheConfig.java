@@ -44,7 +44,9 @@ public class CacheConfig {
                 .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
                 .activateDefaultTyping(
                         BasicPolymorphicTypeValidator.builder()
-                                .allowIfSubType(Object.class)
+                                .allowIfSubType("com.cci.oms")
+                                .allowIfSubType("java.util")
+                                .allowIfSubType("java.time")
                                 .build(),
                         ObjectMapper.DefaultTyping.NON_FINAL,
                         JsonTypeInfo.As.PROPERTY);

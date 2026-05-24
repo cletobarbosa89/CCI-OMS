@@ -1,0 +1,295 @@
+openapi: "3.0.3"
+info:
+  title: Order Management System API
+  description: REST API for managing orders
+  version: "1.0.0"
+servers:
+  - url: /
+
+tags:
+  - name: Orders
+    description: Order management
+
+paths:
+  /api/orders:
+    post:
+      tags: [ Orders ]
+      summary: Create a new order
+      operationId: createOrder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderRequest'
+      responses:
+        "201":
+          description: Order created successfully
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/X-Correlation-ID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        "400":
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      tags: [ Orders ]
+      summary: Get all orders (paginated, filterable)
+      operationId: getAllOrders
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            format: int32
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            format: int32
+            default: 20
+        - name: sort
+          in: query
+          description: "Format: field,direction (e.g. createdAt,desc)"
+          schema:
+            type: string
+            default: "createdAt,desc"
+        - name: status
+          in: query
+          description: Filter by order status
+          schema:
+            $ref: '#/components/schemas/OrderStatus'
+        - name: customerId
+          in: query
+          description: Filter by customer ID
+          schema:
+            type: string
+        - name: dateFrom
+          in: query
+          description: Filter orders created from this timestamp (inclusive, ISO-8601)
+          schema:
+            type: string
+            format: date-time
+        - name: dateTo
+          in: query
+          description: Filter orders created up to this timestamp (inclusive, ISO-8601)
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: Page of orders
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderPage'
+
+  /api/orders/{id}:
+    get:
+      tags: [ Orders ]
+      summary: Get order by ID
+      operationId: getOrderById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Order found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        "404":
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags: [ Orders ]
+      summary: Delete an order
+      operationId: deleteOrder
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Order deleted
+        "404":
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/orders/{id}/status:
+    patch:
+      tags: [ Orders ]
+      summary: Update order status
+      operationId: updateOrderStatus
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateOrderStatusRequest'
+      responses:
+        "200":
+          description: Status updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        "404":
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "409":
+          description: Invalid status transition
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  headers:
+    X-Correlation-ID:
+      description: Unique request identifier — propagated from request or generated server-side
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+
+    CreateOrderRequest:
+      type: object
+      required:
+        - customerId
+        - productId
+        - quantity
+        - totalAmount
+      properties:
+        customerId:
+          type: string
+          minLength: 1
+        productId:
+          type: string
+          minLength: 1
+        quantity:
+          type: integer
+          format: int32
+          minimum: 1
+        totalAmount:
+          type: number
+          minimum: 0.01
+
+    OrderResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        customerId:
+          type: string
+        productId:
+          type: string
+        quantity:
+          type: integer
+          format: int32
+        totalAmount:
+          type: number
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    UpdateOrderStatusRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+
+    ErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+          format: int32
+        error:
+          type: string
+        message:
+          type: string
+        path:
+          type: string
+        correlationId:
+          type: string
+          description: Correlation ID from X-Correlation-ID header
+        details:
+          type: array
+          items:
+            type: string
+
+    OrderStatus:
+      type: string
+      enum:
+        - PENDING
+        - CONFIRMED
+        - SHIPPED
+        - CANCELLED
+
+    OrderPage:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderResponse'
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+          format: int32
+        number:
+          type: integer
+          format: int32
+        size:
+          type: integer
+          format: int32
+        first:
+          type: boolean
+        last:
+          type: boolean

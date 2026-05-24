@@ -22,12 +22,14 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -64,6 +66,18 @@ public class OrderService {
         return orderRepository.findById(id)
                 .map(orderMapper::toResponse)
                 .orElseThrow(() -> new OrderNotFoundException(id));
+    }
+
+    // Async variant — runs in the order-async thread pool; demonstrates CompletableFuture composition
+    @Async
+    @Transactional(readOnly = true)
+    public CompletableFuture<OrderResponse> getOrderByIdAsync(UUID id) {
+        log.debug("Async fetch for order {}", id);
+        return CompletableFuture.completedFuture(
+                orderRepository.findById(id)
+                        .map(orderMapper::toResponse)
+                        .orElseThrow(() -> new OrderNotFoundException(id))
+        );
     }
 
     @CachePut(value = CacheConfig.ORDERS_CACHE, key = "#id")

@@ -1,0 +1,10 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'oms'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      # host.docker.internal resolves to the host machine from inside Docker Desktop (Windows/Mac)
+      - targets: ['host.docker.internal:8080']

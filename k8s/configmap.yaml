@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: oms-config
+  labels:
+    app: oms
+data:
+  SPRING_APPLICATION_NAME: "OMS"
+  SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres-service:5432/oms_db"
+  SPRING_DATASOURCE_USERNAME: "postgres"
+  SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
+  SPRING_DATA_REDIS_HOST: "redis-service"
+  SPRING_DATA_REDIS_PORT: "6379"
+  MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info,metrics,prometheus"
+  INVENTORY_SERVICE_ENABLED: "false"

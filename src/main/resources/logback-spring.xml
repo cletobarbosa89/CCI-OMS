@@ -25,4 +25,21 @@
         </root>
     </springProfile>
 
+    <!-- Logging/ELK profile: ships JSON logs to Logstash/Elasticsearch/Kibana.
+         Activate via SPRING_PROFILES_ACTIVE=logging. ELK stack: docker compose with logging profile. -->
+    <springProfile name="logging">
+        <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+            <destination>${LOGSTASH_HOST:-localhost}:${LOGSTASH_PORT:-5044}</destination>
+            <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+                <customFields>{"app":"${appName}","profile":"logging"}</customFields>
+                <!-- correlationId from MDC is automatically included by LogstashEncoder -->
+            </encoder>
+            <reconnectionDelay>5 seconds</reconnectionDelay>
+        </appender>
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="LOGSTASH"/>
+        </root>
+    </springProfile>
+
 </configuration>

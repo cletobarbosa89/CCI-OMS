@@ -117,11 +117,11 @@
           </JSONPathAssertion>
           <hashTree/>
 
-          <!-- Assert $.status = SHIPPED (saga completes synchronously) -->
+          <!-- Assert $.status = PENDING (order is created synchronously; async saga transitions happen after) -->
           <JSONPathAssertion guiclass="JSONPathAssertionGui" testclass="JSONPathAssertion"
-                             testname="Assert $.status = SHIPPED" enabled="true">
+                             testname="Assert $.status = PENDING" enabled="true">
             <stringProp name="JSON_PATH">$.status</stringProp>
-            <stringProp name="EXPECTED_VALUE">SHIPPED</stringProp>
+            <stringProp name="EXPECTED_VALUE">PENDING</stringProp>
             <boolProp name="JSONVALIDATION">true</boolProp>
             <boolProp name="EXPECT_NULL">false</boolProp>
             <boolProp name="INVERT">false</boolProp>

@@ -1,35 +1,4 @@
 {
-  "__inputs": [
-    {
-      "name": "DS_PROMETHEUS",
-      "label": "Prometheus",
-      "description": "",
-      "type": "datasource",
-      "pluginId": "prometheus",
-      "pluginName": "Prometheus"
-    }
-  ],
-  "__elements": {},
-  "__requires": [
-    {
-      "type": "datasource",
-      "id": "prometheus",
-      "name": "Prometheus",
-      "version": "1.0.0"
-    },
-    {
-      "type": "panel",
-      "id": "stat",
-      "name": "Stat",
-      "version": ""
-    },
-    {
-      "type": "panel",
-      "id": "timeseries",
-      "name": "Time series",
-      "version": ""
-    }
-  ],
   "annotations": {
     "list": [
       {
@@ -55,10 +24,10 @@
       "description": "HTTP requests per second (order-service)",
       "type": "stat",
       "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
-      "datasource": { "type": "prometheus", "uid": "oms-prometheus" },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "oms-prometheus" },
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "expr": "sum(rate(http_server_requests_seconds_count{job=\"order-service\"}[1m]))",
           "legendFormat": "req/s",
           "refId": "A"
@@ -95,10 +64,10 @@
       "description": "Percentage of 5xx responses over the last minute",
       "type": "stat",
       "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 },
-      "datasource": { "type": "prometheus", "uid": "oms-prometheus" },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "oms-prometheus" },
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "expr": "sum(rate(http_server_requests_seconds_count{job=\"order-service\",status=~\"5..\"}[1m])) / sum(rate(http_server_requests_seconds_count{job=\"order-service\"}[1m])) * 100",
           "legendFormat": "error %",
           "refId": "A"
@@ -135,10 +104,10 @@
       "description": "99th percentile HTTP response time",
       "type": "stat",
       "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 },
-      "datasource": { "type": "prometheus", "uid": "oms-prometheus" },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "oms-prometheus" },
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "expr": "histogram_quantile(0.99, sum(rate(http_server_requests_seconds_bucket{job=\"order-service\"}[5m])) by (le))",
           "legendFormat": "p99",
           "refId": "A"
@@ -175,10 +144,10 @@
       "description": "order-service process uptime",
       "type": "stat",
       "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 },
-      "datasource": { "type": "prometheus", "uid": "oms-prometheus" },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "oms-prometheus" },
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "expr": "process_uptime_seconds{job=\"order-service\"}",
           "legendFormat": "uptime",
           "refId": "A"
@@ -214,10 +183,10 @@
       "description": "Requests per second grouped by HTTP method and URI",
       "type": "timeseries",
       "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
-      "datasource": { "type": "prometheus", "uid": "oms-prometheus" },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "oms-prometheus" },
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "expr": "sum(rate(http_server_requests_seconds_count{job=\"order-service\"}[1m])) by (method, uri)",
           "legendFormat": "{{method}} {{uri}}",
           "refId": "A"
@@ -225,11 +194,7 @@
       ],
       "options": {
         "tooltip": { "mode": "multi", "sort": "desc" },
-        "legend": {
-          "displayMode": "table",
-          "placement": "bottom",
-          "calcs": ["lastNotNull", "max"]
-        }
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "max"] }
       },
       "fieldConfig": {
         "defaults": {
@@ -249,25 +214,25 @@
     {
       "id": 6,
       "title": "Response Latency — P50 / P95 / P99",
-      "description": "HTTP response time percentiles across all endpoints (requires histogram metrics)",
+      "description": "HTTP response time percentiles (requires percentiles-histogram enabled)",
       "type": "timeseries",
       "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
-      "datasource": { "type": "prometheus", "uid": "oms-prometheus" },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "oms-prometheus" },
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "expr": "histogram_quantile(0.50, sum(rate(http_server_requests_seconds_bucket{job=\"order-service\"}[5m])) by (le))",
           "legendFormat": "P50",
           "refId": "A"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "oms-prometheus" },
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{job=\"order-service\"}[5m])) by (le))",
           "legendFormat": "P95",
           "refId": "B"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "oms-prometheus" },
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "expr": "histogram_quantile(0.99, sum(rate(http_server_requests_seconds_bucket{job=\"order-service\"}[5m])) by (le))",
           "legendFormat": "P99",
           "refId": "C"
@@ -275,11 +240,7 @@
       ],
       "options": {
         "tooltip": { "mode": "multi", "sort": "desc" },
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "calcs": ["lastNotNull", "max"]
-        }
+        "legend": { "displayMode": "list", "placement": "bottom", "calcs": ["lastNotNull", "max"] }
       },
       "fieldConfig": {
         "defaults": {
@@ -296,21 +257,15 @@
         "overrides": [
           {
             "matcher": { "id": "byName", "options": "P50" },
-            "properties": [
-              { "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } }
-            ]
+            "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } }]
           },
           {
             "matcher": { "id": "byName", "options": "P95" },
-            "properties": [
-              { "id": "color", "value": { "mode": "fixed", "fixedColor": "yellow" } }
-            ]
+            "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "yellow" } }]
           },
           {
             "matcher": { "id": "byName", "options": "P99" },
-            "properties": [
-              { "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }
-            ]
+            "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }]
           }
         ]
       }
@@ -321,16 +276,16 @@
       "description": "Rate of 4xx (client) and 5xx (server) errors per second",
       "type": "timeseries",
       "gridPos": { "x": 0, "y": 12, "w": 12, "h": 8 },
-      "datasource": { "type": "prometheus", "uid": "oms-prometheus" },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "oms-prometheus" },
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "expr": "sum(rate(http_server_requests_seconds_count{job=\"order-service\",status=~\"4..\"}[1m])) by (status)",
           "legendFormat": "{{status}} client error",
           "refId": "A"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "oms-prometheus" },
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "expr": "sum(rate(http_server_requests_seconds_count{job=\"order-service\",status=~\"5..\"}[1m])) by (status)",
           "legendFormat": "{{status}} server error",
           "refId": "B"
@@ -338,11 +293,7 @@
       ],
       "options": {
         "tooltip": { "mode": "multi", "sort": "desc" },
-        "legend": {
-          "displayMode": "table",
-          "placement": "bottom",
-          "calcs": ["lastNotNull", "max"]
-        }
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "max"] }
       },
       "fieldConfig": {
         "defaults": {
@@ -366,22 +317,22 @@
       "description": "Heap memory used vs committed vs max",
       "type": "timeseries",
       "gridPos": { "x": 12, "y": 12, "w": 12, "h": 8 },
-      "datasource": { "type": "prometheus", "uid": "oms-prometheus" },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "oms-prometheus" },
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "expr": "sum(jvm_memory_used_bytes{job=\"order-service\", area=\"heap\"})",
           "legendFormat": "Used",
           "refId": "A"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "oms-prometheus" },
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "expr": "sum(jvm_memory_committed_bytes{job=\"order-service\", area=\"heap\"})",
           "legendFormat": "Committed",
           "refId": "B"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "oms-prometheus" },
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "expr": "sum(jvm_memory_max_bytes{job=\"order-service\", area=\"heap\"})",
           "legendFormat": "Max",
           "refId": "C"
@@ -389,11 +340,7 @@
       ],
       "options": {
         "tooltip": { "mode": "multi", "sort": "desc" },
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "calcs": ["lastNotNull", "max"]
-        }
+        "legend": { "displayMode": "list", "placement": "bottom", "calcs": ["lastNotNull", "max"] }
       },
       "fieldConfig": {
         "defaults": {
@@ -417,15 +364,11 @@
           },
           {
             "matcher": { "id": "byName", "options": "Committed" },
-            "properties": [
-              { "id": "color", "value": { "mode": "fixed", "fixedColor": "orange" } }
-            ]
+            "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "orange" } }]
           },
           {
             "matcher": { "id": "byName", "options": "Used" },
-            "properties": [
-              { "id": "color", "value": { "mode": "fixed", "fixedColor": "blue" } }
-            ]
+            "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "blue" } }]
           }
         ]
       }
@@ -436,16 +379,16 @@
       "description": "Process CPU vs total system CPU (0–100%)",
       "type": "timeseries",
       "gridPos": { "x": 0, "y": 20, "w": 8, "h": 8 },
-      "datasource": { "type": "prometheus", "uid": "oms-prometheus" },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "oms-prometheus" },
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "expr": "process_cpu_usage{job=\"order-service\"} * 100",
           "legendFormat": "Process CPU",
           "refId": "A"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "oms-prometheus" },
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "expr": "system_cpu_usage{job=\"order-service\"} * 100",
           "legendFormat": "System CPU",
           "refId": "B"
@@ -453,11 +396,7 @@
       ],
       "options": {
         "tooltip": { "mode": "multi", "sort": "desc" },
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "calcs": ["lastNotNull", "mean"]
-        }
+        "legend": { "displayMode": "list", "placement": "bottom", "calcs": ["lastNotNull", "mean"] }
       },
       "fieldConfig": {
         "defaults": {
@@ -482,22 +421,22 @@
       "description": "Active, idle, and maximum database connections",
       "type": "timeseries",
       "gridPos": { "x": 8, "y": 20, "w": 8, "h": 8 },
-      "datasource": { "type": "prometheus", "uid": "oms-prometheus" },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "oms-prometheus" },
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "expr": "hikaricp_connections_active{job=\"order-service\"}",
           "legendFormat": "Active",
           "refId": "A"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "oms-prometheus" },
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "expr": "hikaricp_connections_idle{job=\"order-service\"}",
           "legendFormat": "Idle",
           "refId": "B"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "oms-prometheus" },
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "expr": "hikaricp_connections_max{job=\"order-service\"}",
           "legendFormat": "Max",
           "refId": "C"
@@ -505,11 +444,7 @@
       ],
       "options": {
         "tooltip": { "mode": "multi", "sort": "desc" },
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "calcs": ["lastNotNull"]
-        }
+        "legend": { "displayMode": "list", "placement": "bottom", "calcs": ["lastNotNull"] }
       },
       "fieldConfig": {
         "defaults": {
@@ -542,22 +477,22 @@
       "description": "Live, daemon, and peak thread counts",
       "type": "timeseries",
       "gridPos": { "x": 16, "y": 20, "w": 8, "h": 8 },
-      "datasource": { "type": "prometheus", "uid": "oms-prometheus" },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "oms-prometheus" },
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "expr": "jvm_threads_live_threads{job=\"order-service\"}",
           "legendFormat": "Live",
           "refId": "A"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "oms-prometheus" },
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "expr": "jvm_threads_daemon_threads{job=\"order-service\"}",
           "legendFormat": "Daemon",
           "refId": "B"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "oms-prometheus" },
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "expr": "jvm_threads_peak_threads{job=\"order-service\"}",
           "legendFormat": "Peak",
           "refId": "C"
@@ -565,11 +500,7 @@
       ],
       "options": {
         "tooltip": { "mode": "multi", "sort": "desc" },
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "calcs": ["lastNotNull", "max"]
-        }
+        "legend": { "displayMode": "list", "placement": "bottom", "calcs": ["lastNotNull", "max"] }
       },
       "fieldConfig": {
         "defaults": {
@@ -592,7 +523,22 @@
   "refresh": "30s",
   "schemaVersion": 39,
   "tags": ["oms", "spring-boot", "microservices"],
-  "templating": { "list": [] },
+  "templating": {
+    "list": [
+      {
+        "current": {},
+        "hide": 0,
+        "includeAll": false,
+        "multi": false,
+        "name": "datasource",
+        "options": [],
+        "query": "prometheus",
+        "refresh": 1,
+        "type": "datasource",
+        "label": "Data Source"
+      }
+    ]
+  },
   "time": { "from": "now-1h", "to": "now" },
   "timepicker": {},
   "timezone": "browser",

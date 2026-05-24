@@ -58,6 +58,17 @@ stages:
               reportDirectory: '$(System.DefaultWorkingDirectory)/target/site/jacoco'
               failIfCoverageEmpty: false
 
+          - task: Maven@4
+            displayName: 'inventory-service mvn verify'
+            inputs:
+              mavenPomFile: 'inventory-service/pom.xml'
+              goals: 'verify'
+              options: '-B -Duser.timezone=UTC'
+              publishJUnitResults: true
+              testResultsFiles: 'inventory-service/**/surefire-reports/TEST-*.xml'
+              javaHomeOption: JDKVersion
+              jdkVersionOption: '1.21'
+
   # ── Stage 2: Build Docker image and push to Azure Container Registry ─────────
   - stage: Docker
     displayName: 'Build & Push Image'
@@ -77,11 +88,31 @@ stages:
               jdkVersionOption: '1.21'
 
           - task: Docker@2
-            displayName: 'Build and push to ACR'
+            displayName: 'Build and push oms to ACR'
             inputs:
               command: buildAndPush
               repository: '$(imageRepository)'
               dockerfile: '$(dockerfilePath)'
+              containerRegistry: '$(acrServiceConnection)'
+              tags: |
+                $(tag)
+                latest
+
+          - task: Maven@4
+            displayName: 'inventory-service mvn package'
+            inputs:
+              mavenPomFile: 'inventory-service/pom.xml'
+              goals: 'package'
+              options: '-B -DskipTests'
+              javaHomeOption: JDKVersion
+              jdkVersionOption: '1.21'
+
+          - task: Docker@2
+            displayName: 'Build and push inventory-service to ACR'
+            inputs:
+              command: buildAndPush
+              repository: 'inventory-service'
+              dockerfile: '$(Build.SourcesDirectory)/inventory-service/Dockerfile'
               containerRegistry: '$(acrServiceConnection)'
               tags: |
                 $(tag)

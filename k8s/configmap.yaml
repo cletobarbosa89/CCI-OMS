@@ -12,4 +12,5 @@ data:
   SPRING_DATA_REDIS_HOST: "redis-service"
   SPRING_DATA_REDIS_PORT: "6379"
   MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info,metrics,prometheus"
-  INVENTORY_SERVICE_ENABLED: "false"
+  INVENTORY_SERVICE_ENABLED: "true"
+  INVENTORY_SERVICE_URL: "http://inventory-service:8081"

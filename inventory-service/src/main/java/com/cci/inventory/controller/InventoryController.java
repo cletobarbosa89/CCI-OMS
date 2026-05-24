@@ -1,6 +1,7 @@
 package com.cci.inventory.controller;
 
 import com.cci.inventory.dto.StockReservationRequest;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class InventoryController {
 
     @PostMapping("/reserve")
-    public ResponseEntity<Void> reserve(@RequestBody StockReservationRequest request) {
+    public ResponseEntity<Void> reserve(@Valid @RequestBody StockReservationRequest request) {
         log.info("Reserving {} x {} for order {}", request.quantity(), request.productId(), request.orderId());
         // Stub: always succeeds. A real implementation would check and decrement stock in a database.
         return ResponseEntity.ok().build();

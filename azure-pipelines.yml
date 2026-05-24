@@ -1,0 +1,118 @@
+trigger:
+  branches:
+    include:
+      - master
+
+pr:
+  branches:
+    include:
+      - master
+
+# ── Pipeline-level variables ─────────────────────────────────────────────────
+# Secret variables (DB_PASSWORD, REDIS_HOST, etc.) must be set in the
+# Azure DevOps Library / Variable Groups, not hardcoded here.
+variables:
+  acrLoginServer: 'ccioms.azurecr.io'          # Replace with your ACR login server
+  imageRepository: 'oms'
+  dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile'
+  tag: '$(Build.BuildId)'
+  acrServiceConnection: 'CCI-ACR-Connection'    # Azure DevOps service connection → ACR
+  azureSubscription: 'CCI-Azure-Subscription'   # Azure DevOps service connection → subscription
+  appServiceName: 'cci-oms-app'
+  resourceGroupName: 'cci-oms-rg'
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+
+  # ── Stage 1: Build + test + JaCoCo coverage ─────────────────────────────────
+  - stage: CI
+    displayName: 'Build & Test'
+    jobs:
+      - job: BuildAndTest
+        displayName: 'Maven verify + JaCoCo'
+        steps:
+          - task: JavaToolInstaller@0
+            displayName: 'Use Java 21'
+            inputs:
+              versionSpec: '21'
+              jdkArchitectureOption: x64
+              jdkSourceOption: PreInstalled
+
+          - task: Maven@4
+            displayName: 'mvn verify'
+            inputs:
+              mavenPomFile: 'pom.xml'
+              goals: 'verify'
+              options: '-B -Duser.timezone=UTC'
+              publishJUnitResults: true
+              testResultsFiles: '**/surefire-reports/TEST-*.xml'
+              javaHomeOption: JDKVersion
+              jdkVersionOption: '1.21'
+
+          - task: PublishCodeCoverageResults@2
+            displayName: 'Publish JaCoCo coverage'
+            inputs:
+              summaryFileLocation: '$(System.DefaultWorkingDirectory)/target/site/jacoco/jacoco.xml'
+              reportDirectory: '$(System.DefaultWorkingDirectory)/target/site/jacoco'
+              failIfCoverageEmpty: false
+
+  # ── Stage 2: Build Docker image and push to Azure Container Registry ─────────
+  - stage: Docker
+    displayName: 'Build & Push Image'
+    dependsOn: CI
+    condition: succeeded()
+    jobs:
+      - job: DockerBuildPush
+        displayName: 'Docker build → ACR'
+        steps:
+          - task: Maven@4
+            displayName: 'mvn package -DskipTests'
+            inputs:
+              mavenPomFile: 'pom.xml'
+              goals: 'package'
+              options: '-B -DskipTests'
+              javaHomeOption: JDKVersion
+              jdkVersionOption: '1.21'
+
+          - task: Docker@2
+            displayName: 'Build and push to ACR'
+            inputs:
+              command: buildAndPush
+              repository: '$(imageRepository)'
+              dockerfile: '$(dockerfilePath)'
+              containerRegistry: '$(acrServiceConnection)'
+              tags: |
+                $(tag)
+                latest
+
+  # ── Stage 3: Deploy container to Azure App Service ───────────────────────────
+  # Only runs on master branch pushes (not on PRs)
+  - stage: Deploy
+    displayName: 'Deploy to App Service'
+    dependsOn: Docker
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+    jobs:
+      - deployment: DeployAppService
+        displayName: 'Release to production'
+        environment: 'production'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: AzureWebAppContainer@1
+                  displayName: 'Deploy $(imageRepository):$(tag) to $(appServiceName)'
+                  inputs:
+                    azureSubscription: '$(azureSubscription)'
+                    appName: '$(appServiceName)'
+                    resourceGroupName: '$(resourceGroupName)'
+                    imageName: '$(acrLoginServer)/$(imageRepository):$(tag)'
+                    # App Service environment variables — map to Spring properties
+                    appSettings: >
+                      -SPRING_PROFILES_ACTIVE "azure"
+                      -SPRING_DATASOURCE_URL "$(DATASOURCE_URL)"
+                      -SPRING_DATASOURCE_USERNAME "$(DATASOURCE_USERNAME)"
+                      -SPRING_DATASOURCE_PASSWORD "$(DATASOURCE_PASSWORD)"
+                      -SPRING_DATA_REDIS_HOST "$(REDIS_HOST)"
+                      -SPRING_DATA_REDIS_PASSWORD "$(REDIS_PASSWORD)"

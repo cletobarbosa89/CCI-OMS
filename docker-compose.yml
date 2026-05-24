@@ -105,9 +105,7 @@ services:
     restart: always
     environment:
       - discovery.type=single-node
-      - xpack.security.enabled=true
-      - xpack.security.http.ssl.enabled=false
-      - ELASTIC_PASSWORD=elastic123
+      - xpack.security.enabled=false
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
     ports:
       - "9200:9200"
@@ -120,9 +118,6 @@ services:
     restart: always
     ports:
       - "5044:5044"
-    environment:
-      ELASTIC_USER: elastic
-      ELASTIC_PASSWORD: elastic123
     volumes:
       - ./monitoring/logstash/pipeline:/usr/share/logstash/pipeline:ro
     depends_on:
@@ -136,8 +131,6 @@ services:
       - "5601:5601"
     environment:
       ELASTICSEARCH_HOSTS: http://elasticsearch:9200
-      ELASTICSEARCH_USERNAME: elastic
-      ELASTICSEARCH_PASSWORD: elastic123
     depends_on:
       - elasticsearch
 

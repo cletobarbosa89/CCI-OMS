@@ -27,6 +27,7 @@ public class CacheConfig {
                         .allowIfSubType("com.cci.oms")
                         .allowIfSubType("java.util")
                         .allowIfSubType("java.time")
+                        .allowIfSubType("java.math")
                         .build())
                 .build();
 

@@ -3,5 +3,6 @@ INSERT INTO inventory (product_id, available_quantity, reserved_quantity, versio
 VALUES
     ('PROD-001', 100, 0, 0),
     ('PROD-002', 50,  0, 0),
-    ('PROD-OUT', 0,   0, 0)
+    ('PROD-OUT', 0,   0, 0),
+    ('P99',      100, 0, 0)
 ON CONFLICT (product_id) DO NOTHING;

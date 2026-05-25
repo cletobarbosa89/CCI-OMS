@@ -4,6 +4,7 @@ import com.cci.oms.application.port.InventoryPort;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
@@ -27,7 +28,10 @@ public class RestClientInventoryAdapter implements InventoryPort {
 
     public RestClientInventoryAdapter(
             @Value("${inventory.service.url:http://localhost:8081}") String baseUrl) {
-        this.restClient = RestClient.builder().baseUrl(baseUrl).build();
+        this.restClient = RestClient.builder()
+                .baseUrl(baseUrl)
+                .requestFactory(new SimpleClientHttpRequestFactory())
+                .build();
         log.info("RestClientInventoryAdapter initialised — targeting {}", baseUrl);
     }
 

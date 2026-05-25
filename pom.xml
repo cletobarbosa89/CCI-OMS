@@ -29,6 +29,7 @@
         <openapi-generator.version>7.9.0</openapi-generator.version>
         <jmeter-plugin.version>3.8.0</jmeter-plugin.version>
         <sonar-plugin.version>3.11.0.3922</sonar-plugin.version>
+        <wiremock.version>3.10.0</wiremock.version>
     </properties>
 
     <dependencyManagement>
@@ -48,6 +49,11 @@
                 <groupId>net.logstash.logback</groupId>
                 <artifactId>logstash-logback-encoder</artifactId>
                 <version>${logstash-encoder.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wiremock</groupId>
+                <artifactId>wiremock-standalone</artifactId>
+                <version>${wiremock.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
